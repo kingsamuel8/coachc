@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>코치씨 결제 확인</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pay/pay.css">
+</head>
+<body>
+<header><a class="logo" href="/">Coach<span>C</span></a></header>
+<main>
+  <div class="card" id="box"><p class="big">결제를 확인하고 있어요…</p><p class="muted">창을 닫지 말아주세요.</p></div>
+</main>
+<script>
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const box = document.getElementById('box');
+  const show = (title, msg, ok) => { box.innerHTML = ''; const h = document.createElement('p'); h.className = 'big'; h.textContent = title; const p = document.createElement('p'); p.className = 'muted'; p.textContent = msg; box.append(h, p); if (ok) { const a = document.createElement('a'); a.className = 'primary'; a.href = '/'; a.textContent = '코치씨 홈으로'; a.style.marginTop = '16px'; box.append(a); } else { box.style.color = 'var(--red)'; } };
+  const paymentKey = q.get('paymentKey'), orderId = q.get('orderId'), amount = q.get('amount');
+  if (!paymentKey || !orderId || !amount) return show('결제 정보가 없어요', '코치씨로 문의해 주세요.');
+  try {
+    const r = await fetch('https://hjbgdgwupbmcbqjtufzj.supabase.co/functions/v1/coachc-payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: 'sb_publishable_sk76m6b6aySKu36hmyuMhw_CtCjqCpc' },
+      body: JSON.stringify({ action: 'confirm', paymentKey, orderId, amount: Number(amount) })
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) return show('결제를 완료하지 못했어요', (d.message || '결제가 승인되지 않았어요.') + ' 카드에서 돈이 빠져나갔다면 자동으로 취소되니, 코치씨로 문의해 주세요.');
+    show('결제가 완료됐어요', d.order_name + ' · ' + Number(d.amount).toLocaleString('ko-KR') + '원. 코치씨가 레슨 일정을 확정해 연락드릴게요.', true);
+    history.replaceState(null, '', '/pay/success/');
+  } catch (e) {
+    show('결제 확인 중 문제가 생겼어요', '잠시 후 이 페이지를 새로고침하거나 코치씨로 문의해 주세요.');
+  }
+})();
+</script>
+</body>
+</html>

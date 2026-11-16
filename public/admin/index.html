@@ -39,6 +39,13 @@
   .saved{font-size:12px;color:var(--green);min-height:16px}
   .empty{background:#fff;border-radius:14px;padding:40px;text-align:center;color:var(--muted)}
   a.tel{color:var(--green);font-weight:700}
+  .pay{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;display:flex;flex-direction:column;gap:6px}
+  .pay .btns{display:flex;gap:6px;flex-wrap:wrap}
+  .pay .btns button{min-height:34px;font-size:12px;padding:0 10px}
+  .ord{font-size:12px;background:var(--bg);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px}
+  .ord .l{display:flex;justify-content:space-between;gap:6px;align-items:center}
+  .ord button{min-height:28px;font-size:11px;padding:0 8px}
+  .ost{font-weight:700}.ost.paid{color:var(--green)}.ost.ready{color:var(--amber)}.ost.canceled,.ost.partial_canceled{color:var(--red)}
   @media (max-width:760px){.card{grid-template-columns:1fr}}
 </style>
 </head>
@@ -77,7 +84,10 @@
 const sb = supabase.createClient('https://hjbgdgwupbmcbqjtufzj.supabase.co', 'sb_publishable_sk76m6b6aySKu36hmyuMhw_CtCjqCpc', { auth: { persistSession: false } });
 const STATUS = { new: '새 신청', contacted: '연락함', assigned: '배정 완료', done: '레슨 완료', canceled: '취소' };
 const $ = (id) => document.getElementById(id);
-let KEY = '', rows = [], filter = 'all', lastIds = null;
+let KEY = '', rows = [], orders = {}, filter = 'all', lastIds = null;
+const OST = { ready: '결제 대기', paid: '결제 완료', partial_canceled: '부분 환불', canceled: '전액 환불', failed: '실패' };
+const FN = 'https://hjbgdgwupbmcbqjtufzj.supabase.co/functions/v1/coachc-payments';
+const won = (n) => Number(n).toLocaleString('ko-KR') + '원';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (t) => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
 
@@ -90,6 +100,8 @@ async function load(first) {
   const ids = new Set(data.map(r => r.id));
   if (lastIds && data.some(r => !lastIds.has(r.id))) { document.title = '● 새 신청 · 코치씨 운영자'; }
   lastIds = ids; rows = data;
+  const ro = await sb.rpc('coachc_admin_list_orders', { p_key: KEY });
+  orders = {}; (ro.data || []).forEach(o => { (orders[o.trial_request_id] = orders[o.trial_request_id] || []).push(o); });
   if (first) { $('login').hidden = true; $('app').hidden = false; $('hdrRight').hidden = false; try { sessionStorage.setItem('cc_admin', KEY); } catch (e) {} }
   $('updated').textContent = fmt(Date.now()) + ' 기준';
   render();
@@ -122,6 +134,16 @@ function render() {
         <textarea data-k="admin_note" placeholder="통화로 확인한 장소, 가능 시간, 구력, 목표 등">${esc(r.admin_note || '')}</textarea>
         <button class="primary" data-save>저장</button>
         <div class="saved" data-msg></div>
+        <div class="pay">
+          <label>결제</label>
+          <div class="btns"><button data-order="trial">체험 1만원 링크</button><button data-order="pkg5">5회 40만원 링크</button></div>
+          ${(orders[r.id] || []).map(o => `<div class="ord" data-code="${esc(o.order_code)}">
+            <div class="l"><span>${esc(o.order_name.replace('코치씨 ', ''))} · ${won(o.amount)}</span><span class="ost ${o.status}">${OST[o.status] || o.status}</span></div>
+            ${o.canceled_amount ? `<div class="muted">환불 ${won(o.canceled_amount)}</div>` : ''}
+            ${o.last_error && o.status === 'ready' ? `<div style="color:var(--red)">${esc(o.last_error)}</div>` : ''}
+            <div class="l"><span class="muted">${fmt(o.created_at)}</span><span>${o.status === 'ready' ? `<button data-copy>링크 복사</button>` : ''}${['paid','partial_canceled'].includes(o.status) ? ` <button data-refund data-remain="${o.amount - o.canceled_amount}">환불</button>` : ''}</span></div>
+          </div>`).join('')}
+        </div>
       </div>
     </div>`).join('');
 }
@@ -138,6 +160,39 @@ $('list').addEventListener('click', async (e) => {
   const r = rows.find(x => x.id === id); r.status = v('status'); r.assigned_pro = v('assigned_pro'); r.admin_note = v('admin_note');
   msg.style.color = ''; msg.textContent = '저장했어요';
   setTimeout(render, 600);
+});
+$('list').addEventListener('click', async (e) => {
+  const ob = e.target.closest('[data-order]');
+  if (ob) {
+    const id = ob.closest('.card').dataset.id; ob.disabled = true;
+    const { data, error } = await sb.rpc('coachc_admin_create_order', { p_key: KEY, p_trial_id: id, p_product: ob.dataset.order });
+    ob.disabled = false;
+    if (error) return alert('결제 링크를 만들지 못했어요.');
+    const link = location.origin + '/pay/?o=' + data;
+    try { await navigator.clipboard.writeText(link); alert('결제 링크를 복사했어요. 고객에게 문자로 보내주세요.\n' + link); } catch (_) { prompt('결제 링크를 복사해 고객에게 보내주세요', link); }
+    return load(false);
+  }
+  const cb = e.target.closest('[data-copy]');
+  if (cb) {
+    const link = location.origin + '/pay/?o=' + cb.closest('.ord').dataset.code;
+    try { await navigator.clipboard.writeText(link); cb.textContent = '복사됨'; } catch (_) { prompt('결제 링크', link); }
+    return;
+  }
+  const rb = e.target.closest('[data-refund]');
+  if (rb) {
+    const code = rb.closest('.ord').dataset.code, remain = Number(rb.dataset.remain);
+    const v = prompt('환불할 금액(원)을 입력하세요. 남은 금액: ' + won(remain) + '\n남은 회차 금액만큼 입력하면 부분 환불돼요.', String(remain));
+    if (v == null) return;
+    const amt = Math.floor(Number(String(v).replace(/[^\d]/g, '')));
+    if (!(amt > 0) || amt > remain) return alert('금액을 확인해 주세요.');
+    if (!confirm(won(amt) + '을 환불할까요? 되돌릴 수 없어요.')) return;
+    rb.disabled = true;
+    const r = await fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: 'sb_publishable_sk76m6b6aySKu36hmyuMhw_CtCjqCpc' }, body: JSON.stringify({ action: 'cancel', adminKey: KEY, orderId: code, cancelAmount: amt, reason: '고객 요청 환불' }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) { rb.disabled = false; return alert('환불하지 못했어요: ' + (d.message || d.error || '')); }
+    alert(won(amt) + ' 환불했어요.');
+    return load(false);
+  }
 });
 $('filters').addEventListener('click', (e) => {
   const b = e.target.closest('[data-f]'); if (!b) return;

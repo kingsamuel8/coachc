@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>코치씨 결제 실패</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pay/pay.css">
+</head>
+<body>
+<header><a class="logo" href="/">Coach<span>C</span></a></header>
+<main>
+  <div class="card">
+    <p class="big">결제가 완료되지 않았어요</p>
+    <p class="muted" id="msg">결제를 취소했거나 문제가 생겼어요.</p>
+    <a class="primary" id="retry" href="/" style="margin-top:16px">다시 결제하기</a>
+  </div>
+</main>
+<script>
+  const q = new URLSearchParams(location.search);
+  const m = q.get('message'); if (m) document.getElementById('msg').textContent = m;
+  const o = q.get('orderId'); if (o && /^[A-Za-z0-9_\-=]{6,64}$/.test(o)) document.getElementById('retry').href = '/pay/?o=' + encodeURIComponent(o);
+</script>
+</body>
+</html>

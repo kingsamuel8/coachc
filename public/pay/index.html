@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>코치씨 결제</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pay/pay.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.tosspayments.com/v2/standard"></script>
+</head>
+<body>
+<header><a class="logo" href="/">Coach<span>C</span></a></header>
+<main>
+  <div class="card" id="loading">결제 정보를 불러오는 중이에요…</div>
+  <div class="card" id="error" hidden></div>
+  <div id="payBox" hidden>
+    <div class="card summary">
+      <div class="muted" id="who"></div>
+      <h1 id="orderName"></h1>
+      <div class="row"><span>결제 금액</span><b id="amount"></b></div>
+      <div class="row"><span>레슨 횟수</span><span id="sessions"></span></div>
+      <p class="note">레슨비는 코치씨가 보관하고 레슨이 끝날 때마다 프로에게 지급해요. 남은 회차는 환불 수수료 없이 환불됩니다(결제 대행 수수료 별도).</p>
+    </div>
+    <div class="card" style="padding:8px 0"><div id="payment-method"></div><div id="agreement"></div></div>
+    <button id="payBtn" class="primary" disabled>결제하기</button>
+  </div>
+</main>
+<script>
+(async () => {
+  // 토스페이먼츠 문서용 테스트 클라이언트 키. 실제 계약 후 라이브 키로 교체.
+  const CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
+  const sb = supabase.createClient('https://hjbgdgwupbmcbqjtufzj.supabase.co', 'sb_publishable_sk76m6b6aySKu36hmyuMhw_CtCjqCpc', { auth: { persistSession: false } });
+  const $ = (id) => document.getElementById(id);
+  const fail = (m) => { $('loading').hidden = true; $('error').hidden = false; $('error').textContent = m; };
+  const code = new URLSearchParams(location.search).get('o');
+  if (!code) return fail('결제 링크가 올바르지 않아요. 코치씨에서 받은 링크로 다시 들어와 주세요.');
+
+  const { data, error } = await sb.rpc('coachc_get_order', { p_code: code });
+  const o = !error && data && data[0];
+  if (!o) return fail('결제 정보를 찾을 수 없어요. 코치씨로 문의해 주세요.');
+  if (o.status === 'paid' || o.status === 'partial_canceled') return fail('이미 결제가 완료된 주문이에요. 감사합니다.');
+  if (o.status === 'canceled') return fail('취소된 주문이에요. 코치씨로 문의해 주세요.');
+
+  $('who').textContent = o.customer_name + ' 님의 결제';
+  $('orderName').textContent = o.order_name;
+  $('amount').textContent = o.amount.toLocaleString('ko-KR') + '원';
+  $('sessions').textContent = o.sessions + '회';
+  $('loading').hidden = true; $('payBox').hidden = false;
+
+  try {
+    const toss = TossPayments(CLIENT_KEY);
+    const widgets = toss.widgets({ customerKey: TossPayments.ANONYMOUS });
+    await widgets.setAmount({ currency: 'KRW', value: o.amount });
+    await Promise.all([
+      widgets.renderPaymentMethods({ selector: '#payment-method', variantKey: 'DEFAULT' }),
+      widgets.renderAgreement({ selector: '#agreement', variantKey: 'AGREEMENT' })
+    ]);
+    $('payBtn').disabled = false;
+    $('payBtn').onclick = async () => {
+      try {
+        await widgets.requestPayment({
+          orderId: o.order_code,
+          orderName: o.order_name,
+          successUrl: location.origin + '/pay/success/',
+          failUrl: location.origin + '/pay/fail/'
+        });
+      } catch (e) { /* 사용자가 결제창을 닫은 경우 등 */ }
+    };
+  } catch (e) {
+    fail('결제창을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+  }
+})();
+</script>
+</body>
+</html>
