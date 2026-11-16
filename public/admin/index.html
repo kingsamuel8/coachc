@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>코치씨 운영자 · 체험 신청</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--ink:#12201B;--muted:#55615C;--green:#1E5B45;--mint:#EAF2EE;--line:#E3E7E5;--bg:#F5F7F6;--red:#B42318;--amber:#8A5300}
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;font-size:14px;line-height:1.5}
+  header{background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:2}
+  header b{font-size:17px;font-weight:900}header b span{color:var(--green)}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  button,select,input,textarea{font:inherit}
+  button{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #C9D6D0;background:#fff;cursor:pointer;font-weight:700}
+  button.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .login{max-width:360px;margin:80px auto;background:#fff;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+  .login input{padding:12px;border:1px solid #C9D6D0;border-radius:10px}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .filters button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .card{background:#fff;border-radius:14px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px}
+  .card.new{box-shadow:inset 4px 0 0 var(--green)}
+  .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .top b{font-size:16px}
+  .muted{color:var(--muted)}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--mint);color:var(--green)}
+  .st{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px}
+  .st.new{background:var(--green);color:#fff}.st.contacted{background:#FFF4E5;color:var(--amber)}.st.assigned{background:#E8EEF9;color:#1F4E79}.st.done{background:var(--line);color:var(--muted)}.st.canceled{background:#FDECEA;color:var(--red)}
+  dl{display:grid;grid-template-columns:72px minmax(0,1fr);gap:4px 10px;margin:10px 0 0}
+  dt{color:var(--muted)}dd{margin:0}
+  .side{display:flex;flex-direction:column;gap:8px}
+  .side label{font-size:12px;color:var(--muted);font-weight:700}
+  .side select,.side input,.side textarea{width:100%;padding:8px 10px;border:1px solid #C9D6D0;border-radius:8px;background:#fff}
+  .side textarea{min-height:60px;resize:vertical}
+  .saved{font-size:12px;color:var(--green);min-height:16px}
+  .empty{background:#fff;border-radius:14px;padding:40px;text-align:center;color:var(--muted)}
+  a.tel{color:var(--green);font-weight:700}
+  @media (max-width:760px){.card{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <b>Coach<span>C</span> 운영자 · 체험 신청</b>
+  <div id="hdrRight" hidden style="display:flex;gap:8px;align-items:center">
+    <span class="muted" id="updated"></span>
+    <button id="refresh">새로고침</button>
+    <button id="logout">나가기</button>
+  </div>
+</header>
+
+<div class="login" id="login">
+  <b style="font-size:18px">운영자 확인</b>
+  <label for="key" class="muted">운영자 키</label>
+  <input id="key" type="password" autocomplete="current-password">
+  <button class="primary" id="enter">들어가기</button>
+  <div id="loginErr" style="color:var(--red);font-size:13px"></div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="filters" id="filters">
+    <button data-f="all" class="on">전체</button>
+    <button data-f="new">새 신청</button>
+    <button data-f="contacted">연락함</button>
+    <button data-f="assigned">배정 완료</button>
+    <button data-f="done">레슨 완료</button>
+    <button data-f="canceled">취소</button>
+    <span class="muted" id="count"></span>
+  </div>
+  <div id="list"></div>
+</div>
+
+<script>
+const sb = supabase.createClient('https://hjbgdgwupbmcbqjtufzj.supabase.co', 'sb_publishable_sk76m6b6aySKu36hmyuMhw_CtCjqCpc', { auth: { persistSession: false } });
+const STATUS = { new: '새 신청', contacted: '연락함', assigned: '배정 완료', done: '레슨 완료', canceled: '취소' };
+const $ = (id) => document.getElementById(id);
+let KEY = '', rows = [], filter = 'all', lastIds = null;
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (t) => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+async function load(first) {
+  const { data, error } = await sb.rpc('coachc_admin_list_trials', { p_key: KEY });
+  if (error) {
+    if (/unauthorized/.test(error.message)) { logout(); $('loginErr').textContent = '운영자 키가 맞지 않아요.'; }
+    return;
+  }
+  const ids = new Set(data.map(r => r.id));
+  if (lastIds && data.some(r => !lastIds.has(r.id))) { document.title = '● 새 신청 · 코치씨 운영자'; }
+  lastIds = ids; rows = data;
+  if (first) { $('login').hidden = true; $('app').hidden = false; $('hdrRight').hidden = false; try { sessionStorage.setItem('cc_admin', KEY); } catch (e) {} }
+  $('updated').textContent = fmt(Date.now()) + ' 기준';
+  render();
+}
+
+function render() {
+  const list = filter === 'all' ? rows : rows.filter(r => r.status === filter);
+  const newCount = rows.filter(r => r.status === 'new').length;
+  $('count').textContent = '총 ' + rows.length + '건 · 새 신청 ' + newCount + '건';
+  if (!list.length) { $('list').innerHTML = '<div class="empty">' + (rows.length ? '이 상태의 신청이 없어요.' : '아직 체험 신청이 없어요.') + '</div>'; return; }
+  $('list').innerHTML = list.map(r => `
+    <div class="card ${r.status === 'new' ? 'new' : ''}" data-id="${r.id}">
+      <div>
+        <div class="top"><b>${esc(r.name)}</b><a class="tel" href="tel:${esc(r.phone.replace(/[^\d+]/g, ''))}">${esc(r.phone)}</a><span class="st ${r.status}">${STATUS[r.status]}</span><span class="muted">${fmt(r.created_at)}</span></div>
+        <div style="margin-top:6px"><span class="tag">${esc(r.field)}${r.field_option ? ' · ' + esc(r.field_option) : ''}</span></div>
+        <dl>
+          <dt>장소</dt><dd>${esc(r.location)}</dd>
+          <dt>가능 시간</dt><dd>${esc((r.days || []).join(', '))} / ${esc((r.times || []).join(', '))}</dd>
+          <dt>구력·타수</dt><dd>${esc(r.experience || '-')} · ${esc(r.avg_score || '-')}</dd>
+          <dt>설명 방식</dt><dd>${esc(r.style || '-')}</dd>
+          ${r.message ? `<dt>요청사항</dt><dd style="white-space:pre-line">${esc(r.message)}</dd>` : ''}
+        </dl>
+      </div>
+      <div class="side">
+        <label>상태</label>
+        <select data-k="status">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === r.status ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <label>배정 프로</label>
+        <input data-k="assigned_pro" value="${esc(r.assigned_pro || '')}" placeholder="프로 이름">
+        <label>메모</label>
+        <textarea data-k="admin_note" placeholder="통화 내용, 일정 등">${esc(r.admin_note || '')}</textarea>
+        <button class="primary" data-save>저장</button>
+        <div class="saved" data-msg></div>
+      </div>
+    </div>`).join('');
+}
+
+$('list').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-save]'); if (!b) return;
+  const card = b.closest('.card'), id = card.dataset.id;
+  const v = (k) => card.querySelector('[data-k="' + k + '"]').value;
+  b.disabled = true;
+  const { error } = await sb.rpc('coachc_admin_update_trial', { p_key: KEY, p_id: id, p_status: v('status'), p_assigned_pro: v('assigned_pro').trim() || null, p_note: v('admin_note').trim() || null });
+  b.disabled = false;
+  const msg = card.querySelector('[data-msg]');
+  if (error) { msg.style.color = 'var(--red)'; msg.textContent = '저장하지 못했어요.'; return; }
+  const r = rows.find(x => x.id === id); r.status = v('status'); r.assigned_pro = v('assigned_pro'); r.admin_note = v('admin_note');
+  msg.style.color = ''; msg.textContent = '저장했어요';
+  setTimeout(render, 600);
+});
+$('filters').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-f]'); if (!b) return;
+  filter = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x === b)); render();
+});
+function logout() { KEY = ''; try { sessionStorage.removeItem('cc_admin'); } catch (e) {} $('app').hidden = true; $('hdrRight').hidden = true; $('login').hidden = false; }
+$('enter').onclick = () => { KEY = $('key').value.trim(); $('loginErr').textContent = ''; if (KEY) load(true); };
+$('key').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('enter').click(); });
+$('refresh').onclick = () => load(false);
+$('logout').onclick = logout;
+window.addEventListener('focus', () => { document.title = '코치씨 운영자 · 체험 신청'; if (KEY) load(false); });
+setInterval(() => { if (KEY && !document.hidden) load(false); }, 60000);
+try { const k = sessionStorage.getItem('cc_admin'); if (k) { KEY = k; load(true); } } catch (e) {}
+</script>
+</body>
+</html>
