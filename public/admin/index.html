@@ -106,10 +106,10 @@ function render() {
         <div class="top"><b>${esc(r.name)}</b><a class="tel" href="tel:${esc(r.phone.replace(/[^\d+]/g, ''))}">${esc(r.phone)}</a><span class="st ${r.status}">${STATUS[r.status]}</span><span class="muted">${fmt(r.created_at)}</span></div>
         <div style="margin-top:6px"><span class="tag">${esc(r.field)}${r.field_option ? ' · ' + esc(r.field_option) : ''}</span></div>
         <dl>
-          <dt>장소</dt><dd>${esc(r.location)}</dd>
-          <dt>가능 시간</dt><dd>${esc((r.days || []).join(', '))} / ${esc((r.times || []).join(', '))}</dd>
-          <dt>구력·타수</dt><dd>${esc(r.experience || '-')} · ${esc(r.avg_score || '-')}</dd>
-          <dt>설명 방식</dt><dd>${esc(r.style || '-')}</dd>
+          ${r.location ? `<dt>장소</dt><dd>${esc(r.location)}</dd>` : ''}
+          ${(r.days || []).length ? `<dt>가능 시간</dt><dd>${esc(r.days.join(', '))} / ${esc((r.times || []).join(', '))}</dd>` : ''}
+          ${r.experience ? `<dt>구력·타수</dt><dd>${esc(r.experience)} · ${esc(r.avg_score || '-')}</dd>` : ''}
+          ${r.style ? `<dt>설명 방식</dt><dd>${esc(r.style)}</dd>` : ''}
           ${r.message ? `<dt>요청사항</dt><dd style="white-space:pre-line">${esc(r.message)}</dd>` : ''}
         </dl>
       </div>
@@ -119,7 +119,7 @@ function render() {
         <label>배정 프로</label>
         <input data-k="assigned_pro" value="${esc(r.assigned_pro || '')}" placeholder="프로 이름">
         <label>메모</label>
-        <textarea data-k="admin_note" placeholder="통화 내용, 일정 등">${esc(r.admin_note || '')}</textarea>
+        <textarea data-k="admin_note" placeholder="통화로 확인한 장소, 가능 시간, 구력, 목표 등">${esc(r.admin_note || '')}</textarea>
         <button class="primary" data-save>저장</button>
         <div class="saved" data-msg></div>
       </div>

@@ -266,65 +266,32 @@
 
 <section id="start" class="cta"><div class="in" style="padding-top:0;padding-bottom:0">
   <h2>철저하게 검증된 분야별 프로,<br>체험 레슨으로 먼저 만나보세요</h2>
-  <p>원하는 분야, 장소, 시간을 남겨주시면 운영팀이 확인하고 맞는 프로를 배정해 연락드려요.</p>
+  <p>분야와 연락처만 남겨주세요. 운영팀이 바로 확인하고 연락드려요.</p>
 
   <form id="trialForm" class="form" novalidate>
-    <div class="fg"><label for="f_name">이름</label><input id="f_name" type="text" autocomplete="name" required></div>
-    <div class="fg"><label for="f_phone">휴대폰 번호</label><input id="f_phone" type="tel" autocomplete="tel" placeholder="010-0000-0000" required></div>
-
     <fieldset class="fg"><legend>배우고 싶은 분야 <small>(여러 개 선택 가능)</small></legend>
-      <div class="chips" id="fieldChips">
+      <div class="chips">
         <label><input type="checkbox" name="field" value="골프 입문"><span>골프 입문</span></label>
         <label><input type="checkbox" name="field" value="스윙 교정"><span>스윙 교정</span></label>
         <label><input type="checkbox" name="field" value="숏게임"><span>숏게임</span></label>
         <label><input type="checkbox" name="field" value="퍼팅"><span>퍼팅</span></label>
         <label><input type="checkbox" name="field" value="필드 레슨"><span>필드 레슨</span></label>
       </div>
-      <div class="chips" id="fieldOpt" hidden>
-        <label><input type="radio" name="field_option" value="파3 9홀"><span>파3 9홀</span></label>
-        <label><input type="radio" name="field_option" value="9홀"><span>9홀</span></label>
-        <label><input type="radio" name="field_option" value="18홀"><span>18홀</span></label>
-      </div>
     </fieldset>
-
-    <div class="fg"><label for="f_loc">레슨 받을 장소</label><input id="f_loc" type="text" placeholder="예: 송도 ○○아파트 커뮤니티, ○○ 골프 스튜디오" required></div>
-
-    <fieldset class="fg"><legend>가능한 요일 <small>(여러 개 선택)</small></legend>
-      <div class="chips">
-        <label><input type="checkbox" name="days" value="월"><span>월</span></label><label><input type="checkbox" name="days" value="화"><span>화</span></label><label><input type="checkbox" name="days" value="수"><span>수</span></label><label><input type="checkbox" name="days" value="목"><span>목</span></label><label><input type="checkbox" name="days" value="금"><span>금</span></label><label><input type="checkbox" name="days" value="토"><span>토</span></label><label><input type="checkbox" name="days" value="일"><span>일</span></label>
-      </div>
-    </fieldset>
-    <fieldset class="fg"><legend>가능한 시간대</legend>
-      <div class="chips">
-        <label><input type="checkbox" name="times" value="오전"><span>오전</span></label><label><input type="checkbox" name="times" value="오후"><span>오후</span></label><label><input type="checkbox" name="times" value="저녁"><span>저녁</span></label>
-      </div>
-    </fieldset>
-
     <div class="two">
-      <div class="fg"><label for="f_exp">구력</label><select id="f_exp"><option value="">선택</option><option>처음이에요</option><option>1년 미만</option><option>1~3년</option><option>3~10년</option><option>10년 이상</option></select></div>
-      <div class="fg"><label for="f_score">평균 타수 <small>(선택)</small></label><select id="f_score"><option value="">선택</option><option>아직 라운드 전</option><option>110타 이상</option><option>100~110타</option><option>90~100타</option><option>80~90타</option><option>80타 이하</option></select></div>
+      <div class="fg"><label for="f_name">이름</label><input id="f_name" type="text" autocomplete="name"></div>
+      <div class="fg"><label for="f_phone">휴대폰 번호</label><input id="f_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></div>
     </div>
-
-    <fieldset class="fg"><legend>어떤 설명이 편하세요?</legend>
-      <div class="chips">
-        <label><input type="radio" name="style" value="원리부터 설명"><span>원리를 알아야 이해돼요</span></label>
-        <label><input type="radio" name="style" value="따라 하기"><span>보고 따라 하는 게 편해요</span></label>
-        <label><input type="radio" name="style" value="상관없음"><span>상관없어요</span></label>
-      </div>
-    </fieldset>
-
-    <div class="fg"><label for="f_msg">요청사항 <small>(선택)</small></label><textarea id="f_msg" rows="3" placeholder="고민이나 목표를 편하게 적어주세요"></textarea></div>
     <input type="text" id="f_hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
-
-    <label class="agree"><input type="checkbox" id="f_agree"><span>(필수) 상담과 프로 배정을 위해 이름, 연락처, 신청 내용을 수집·이용하는 데 동의합니다. 신청일로부터 1년간 보관 후 파기합니다.</span></label>
-
+    <label class="agree"><input type="checkbox" id="f_agree"><span>(필수) 상담과 프로 배정을 위한 이름·연락처 수집·이용에 동의합니다. 신청일로부터 1년 보관 후 파기합니다.</span></label>
     <div class="err" id="f_err" role="alert"></div>
-    <button type="submit" class="btn btn-white" id="f_submit" style="width:100%">체험 레슨 10,000원 신청하기</button>
+    <button type="submit" class="btn btn-white" id="f_submit" style="width:100%">10초 만에 체험 신청</button>
+    <p style="margin:0;font-size:13px;color:var(--muted);text-align:center">장소와 시간은 운영팀이 전화로 여쭤보고 맞춰드려요</p>
   </form>
 
   <div id="f_done" class="done" hidden>
     <h3>신청이 접수됐어요</h3>
-    <p>운영팀이 확인 후 배정 프로와 일정을 연락드릴게요.</p>
+    <p>운영팀이 전화로 원하시는 장소와 시간을 여쭤보고, 그 분야 전문 프로를 배정해 드릴게요.</p>
   </div>
 </div></section>
 
@@ -353,40 +320,24 @@
     const r = form.querySelector('input[name="field"][value="' + v + '"]');
     if (r) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
   }));
-  form.addEventListener('change', (e) => {
-    if (e.target.name === 'field') {
-      const isField = checked('field').includes('필드 레슨');
-      $('fieldOpt').hidden = !isField;
-      if (!isField) form.querySelectorAll('input[name="field_option"]').forEach(i => i.checked = false);
-    }
-  });
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     err.textContent = '';
     if ($('f_hp').value) return;
-    const name = $('f_name').value.trim(), phone = $('f_phone').value.trim(), loc = $('f_loc').value.trim();
-    const field = checked('field').join(', '), opt = checked('field_option')[0] || null;
-    const days = checked('days'), times = checked('times');
+    const name = $('f_name').value.trim(), phone = $('f_phone').value.trim();
+    const fields = checked('field');
+    if (!fields.length) return showErr('배우고 싶은 분야를 하나 이상 골라주세요.');
     if (name.length < 2) return showErr('이름을 입력해 주세요.', 'f_name');
     if (phone.replace(/\D/g, '').length < 9) return showErr('휴대폰 번호를 확인해 주세요.', 'f_phone');
-    if (!field) return showErr('배우고 싶은 분야를 골라주세요.');
-    if (checked('field').includes('필드 레슨') && !opt) return showErr('필드 레슨 과정(파3 9홀, 9홀, 18홀)을 골라주세요.');
-    if (!loc) return showErr('레슨 받을 장소를 입력해 주세요.', 'f_loc');
-    if (!days.length || !times.length) return showErr('가능한 요일과 시간대를 하나 이상 골라주세요.');
     if (!$('f_agree').checked) return showErr('개인정보 수집·이용에 동의해 주세요.', 'f_agree');
     if (!sb) return showErr('일시적인 문제로 신청을 받을 수 없어요. 잠시 후 다시 시도해 주세요.');
-
     btn.disabled = true; btn.textContent = '신청 중…';
     const { error } = await sb.rpc('coachc_submit_trial', {
-      p_name: name, p_phone: phone, p_field: field, p_field_option: opt, p_location: loc,
-      p_days: days, p_times: times, p_experience: $('f_exp').value || null, p_avg_score: $('f_score').value || null,
-      p_style: checked('style')[0] || null, p_message: $('f_msg').value.trim() || null, p_consent: true
+      p_name: name, p_phone: phone, p_field: fields.join(', '), p_field_option: null, p_location: null,
+      p_days: [], p_times: [], p_experience: null, p_avg_score: null, p_style: null, p_message: null, p_consent: true
     });
-    btn.disabled = false; btn.textContent = '체험 레슨 10,000원 신청하기';
-    if (error) {
-      return showErr(/too_many/.test(error.message) ? '방금 신청이 접수됐어요. 잠시 후 다시 시도해 주세요.' : '신청을 보내지 못했어요. 잠시 후 다시 시도해 주세요.');
-    }
+    btn.disabled = false; btn.textContent = '10초 만에 체험 신청';
+    if (error) return showErr(/too_many/.test(error.message) ? '방금 신청이 접수됐어요. 잠시 후 다시 시도해 주세요.' : '신청을 보내지 못했어요. 잠시 후 다시 시도해 주세요.');
     form.hidden = true; $('f_done').hidden = false;
     $('f_done').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
